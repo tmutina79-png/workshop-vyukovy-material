@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Od nápadu k aplikaci: Vibe Coding</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-main: #f8fafc;
+            --bg-slide: #ffffff;
+            --accent-purple: #7c3aed;
+            --accent-blue: #2563eb;
+            --accent-cyan: #0891b2;
+            --accent-green: #16a34a;
+            --accent-pink: #db2777;
+            --accent-orange: #ea580c;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border: rgba(15, 23, 42, 0.08);
+            --border-strong: rgba(15, 23, 42, 0.16);
+            --radius: 16px;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .deck {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .slide {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 80px;
+            overflow-y: auto;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .slide.active {
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 2;
+        }
+
+        .slide.animating-in {
+            animation: slideIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            z-index: 2;
+        }
+
+        .slide.animating-out {
+            animation: slideOut 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            z-index: 1;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+        }
+
+        .slide--hero {
+            background: linear-gradient(135deg, #ede9fe 0%, #dbeafe 50%, #cffafe 100%);
+        }
+
+        .slide--purple {
+            background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+        }
+
+        .slide--blue {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        }
+
+        .slide--green {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        }
+
+        .slide--orange {
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+        }
+
+        .slide--pink {
+            background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+        }
+
+        .slide--cyan {
+            background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
+        }
+
+        .floating-shapes {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .floating-shapes span {
+            position: absolute;
+            border-radius: 999px;
+            animation: floatShape 8s infinite ease-in-out;
+        }
+
+        @keyframes floatShape {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                transform: translateY(-20px) scale(1.05);
+            }
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .centered {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .left-align {
+            text-align: left;
+        }
+
+        .mega-title {
+            font-size: clamp(2.8rem, 5.5vw, 5rem);
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            text-align: center;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue), var(--accent-cyan));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .slide-title {
+            font-size: clamp(2rem, 4vw, 3.2rem);
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+        }
+
+        .slide-subtitle {
+            font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+            color: var(--text-secondary);
+            font-weight: 400;
+            line-height: 1.6;
+            max-width: 780px;
+            text-align: center;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 6px 18px;
+            margin-bottom: 20px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .tag--purple { background: #ede9fe; color: var(--accent-purple); }
+        .tag--blue { background: #dbeafe; color: var(--accent-blue); }
+        .tag--green { background: #dcfce7; color: var(--accent-green); }
+        .tag--orange { background: #ffedd5; color: var(--accent-orange); }
+        .tag--pink { background: #fce7f3; color: var(--accent-pink); }
+        .tag--cyan { background: #cffafe; color: var(--accent-cyan); }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            width: 100%;
+            max-width: 1100px;
+            align-items: start;
+        }
+
+        .three-col {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.98);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-strong);
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        }
+
+        .card__icon {
+            display: block;
+            font-size: 2.2rem;
+            margin-bottom: 14px;
+        }
+
+        .card__title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .card__text {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.65;
+        }
+
+        .flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .flow__step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+            padding: 18px 28px;
+            background: #ffffff;
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+        }
+
+        .flow__step-icon {
+            font-size: 2rem;
+        }
+
+        .flow__step-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        .flow__arrow {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .bullet-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .bullet-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 1rem;
+            line-height: 1.55;
+            color: var(--text-secondary);
+        }
+
+        .bullet-icon {
+            flex-shrink: 0;
+            font-size: 1.2rem;
+            margin-top: 1px;
+        }
+
+        .bullet-list strong {
+            color: var(--text-primary);
+        }
+
+        .highlight-box {
+            background: #f8fafc;
+            border-left: 4px solid var(--accent-purple);
+            border-radius: 0 14px 14px 0;
+            padding: 18px 22px;
+            margin-top: 20px;
+        }
+
+        .highlight-box p {
+            font-size: 0.95rem;
+            line-height: 1.65;
+            color: var(--text-secondary);
+        }
+
+        .prompt-box {
+            position: relative;
+            margin-top: 18px;
+            padding: 28px 32px;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            line-height: 1.75;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .prompt-box::before {
+            content: '💬 Prompt';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            padding: 2px 14px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .green-prompt {
+            background: #f0fdf4;
+            border: 2px solid #bbf7d0;
+        }
+
+        .green-prompt::before {
+            color: var(--accent-green);
+            background: #dcfce7;
+        }
+
+        .orange-prompt {
+            background: #fff7ed;
+            border: 2px solid #fed7aa;
+        }
+
+        .orange-prompt::before {
+            color: var(--accent-orange);
+            background: #ffedd5;
+        }
+
+        .blue-prompt {
+            background: #eff6ff;
+            border: 2px solid #bfdbfe;
+        }
+
+        .blue-prompt::before {
+            color: var(--accent-blue);
+            background: #dbeafe;
+        }
+
+        .pink-prompt {
+            background: #fdf2f8;
+            border: 2px solid #fbcfe8;
+        }
+
+        .pink-prompt::before {
+            color: var(--accent-pink);
+            background: #fce7f3;
+        }
+
+        .difficulty {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 16px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+        }
+
+        .difficulty--easy { background: #dcfce7; color: var(--accent-green); }
+        .difficulty--medium { background: #ffedd5; color: var(--accent-orange); }
+        .difficulty--hard { background: #fce7f3; color: var(--accent-pink); }
+
+        .mini-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 14px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .mini-card {
+            background: #ffffff;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 18px 14px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+        }
+
+        .mini-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-strong);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+        }
+
+        .mini-card__icon {
+            font-size: 1.8rem;
+            margin-bottom: 6px;
+        }
+
+        .mini-card__label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        .compare-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 700px;
+            margin-top: 16px;
+        }
+
+        .compare-box {
+            padding: 20px 24px;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            line-height: 1.65;
+            color: var(--text-secondary);
+        }
+
+        .compare-box strong {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+            font-weight: 800;
+        }
+
+        .compare-box.bad {
+            background: #fef2f2;
+            border: 2px solid #fecaca;
+        }
+
+        .compare-box.good {
+            background: #f0fdf4;
+            border: 2px solid #bbf7d0;
+        }
+
+        .progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            height: 4px;
+            width: 0;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue), var(--accent-cyan));
+            transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .slide-counter {
+            position: fixed;
+            left: 40px;
+            bottom: 38px;
+            z-index: 100;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .nav {
+            position: fixed;
+            right: 40px;
+            bottom: 28px;
+            z-index: 100;
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav button {
+            width: 52px;
+            height: 52px;
+            border: 2px solid var(--border-strong);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+            transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+        }
+
+        .nav button:hover {
+            transform: translateY(-1px);
+            background: #ffffff;
+            border-color: var(--accent-purple);
+            color: var(--accent-purple);
+        }
+
+        .fade-in,
+        .fade-in-delay-1,
+        .fade-in-delay-2,
+        .fade-in-delay-3 {
+            opacity: 0;
+            transform: translateY(14px);
+        }
+
+        .slide.active .fade-in { animation: childFade 0.5s 0.05s ease both; }
+        .slide.active .fade-in-delay-1 { animation: childFade 0.5s 0.18s ease both; }
+        .slide.active .fade-in-delay-2 { animation: childFade 0.5s 0.32s ease both; }
+        .slide.active .fade-in-delay-3 { animation: childFade 0.5s 0.46s ease both; }
+
+        @keyframes childFade {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .mt-12 { margin-top: 12px; }
+        .mt-20 { margin-top: 20px; }
+        .mt-32 { margin-top: 32px; }
+        .mb-16 { margin-bottom: 16px; }
+
+        @media (max-width: 900px) {
+            body {
+                overflow: auto;
+            }
+
+            .slide {
+                padding: 40px 32px 96px;
+            }
+
+            .two-col,
+            .three-col,
+            .compare-row {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .nav {
+                right: 24px;
+                bottom: 20px;
+            }
+
+            .slide-counter {
+                left: 24px;
+                bottom: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress" id="progress"></div>
+    <div class="slide-counter" id="slideCounter">01 / 12</div>
+
+    <div class="deck" id="deck">
+        <section class="slide slide--hero active">
+            <div class="floating-shapes">
+                <span style="top:5%;left:10%;width:280px;height:280px;background:rgba(124,58,237,0.06);animation-delay:0s"></span>
+                <span style="bottom:10%;right:8%;width:320px;height:320px;background:rgba(37,99,235,0.05);animation-delay:2.5s"></span>
+                <span style="top:50%;left:60%;width:200px;height:200px;background:rgba(8,145,178,0.05);animation-delay:5s"></span>
+            </div>
+            <div class="content-wrapper centered">
+                <h1 class="mega-title fade-in" style="font-size:clamp(3rem,6vw,5.5rem);margin-bottom:32px;">Od nápadu<br>k aplikaci</h1>
+                <p class="slide-subtitle fade-in-delay-1" style="font-size:clamp(1.15rem,1.8vw,1.45rem);max-width:800px;margin-bottom:48px;">
+                    Zjistěte, jak dnes můžete s pomocí <strong style="color:var(--accent-purple)">umělé inteligence</strong> vytvářet funkční webové aplikace — <strong style="color:var(--accent-blue)">bez jediného řádku kódu napsaného od nuly</strong>. Stačí nápad, jasná vize a správný prompt.
+                </p>
+                <div class="flow fade-in-delay-2">
+                    <div class="flow__step">
+                        <span class="flow__step-icon">🧠</span>
+                        <span class="flow__step-label">Nápad</span>
+                    </div>
+                    <span class="flow__arrow">+</span>
+                    <div class="flow__step">
+                        <span class="flow__step-icon">🤖</span>
+                        <span class="flow__step-label">AI</span>
+                    </div>
+                    <span class="flow__arrow">=</span>
+                    <div class="flow__step">
+                        <span class="flow__step-icon">📱</span>
+                        <span class="flow__step-label">Aplikace</span>
+                    </div>
+                </div>
+                <p class="fade-in-delay-3" style="margin-top:48px;font-size:0.9rem;color:var(--text-muted);font-weight:500;">Workshop MGO · 2026 · Vibe Coding</p>
+            </div>
+        </section>
+
+        <section class="slide slide--hero">
+            <div class="floating-shapes">
+                <span style="top:-5%;left:-5%;width:300px;height:300px;background:rgba(124,58,237,0.08);animation-delay:0s"></span>
+                <span style="bottom:-10%;right:-5%;width:350px;height:350px;background:rgba(37,99,235,0.06);animation-delay:2s"></span>
+                <span style="top:40%;right:20%;width:180px;height:180px;background:rgba(8,145,178,0.06);animation-delay:4s"></span>
+            </div>
+            <div class="content-wrapper centered">
+                <span class="tag tag--purple fade-in">Workshop MGO 2026</span>
+                <h1 class="mega-title fade-in-delay-1">Od nápadu k aplikaci:<br><span class="gradient-text">Vibe Coding</span></h1>
+                <p class="slide-subtitle fade-in-delay-2">Jak s pomocí AI postavit funkční aplikaci, aniž byste napsali jediný řádek kódu od nuly.</p>
+                <div class="flow mt-32 fade-in-delay-3">
+                    <div class="flow__step"><span class="flow__step-icon">💡</span><span class="flow__step-label">Nápad</span></div>
+                    <span class="flow__arrow">→</span>
+                    <div class="flow__step"><span class="flow__step-icon">🎨</span><span class="flow__step-label">Design</span></div>
+                    <span class="flow__arrow">→</span>
+                    <div class="flow__step"><span class="flow__step-icon">🤖</span><span class="flow__step-label">AI</span></div>
+                    <span class="flow__arrow">→</span>
+                    <div class="flow__step"><span class="flow__step-icon">🚀</span><span class="flow__step-label">Appka</span></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide slide--purple">
+            <div class="content-wrapper centered">
+                <span class="tag tag--purple fade-in">Koncept</span>
+                <h2 class="slide-title fade-in-delay-1">🎵 Co je Vibe Coding?</h2>
+                <p class="slide-subtitle fade-in-delay-1" style="margin-bottom:32px;">Posun od „bušení kódu" k <strong style="color:var(--accent-purple)">řízení vize</strong>.</p>
+                <div class="two-col fade-in-delay-2" style="text-align:left;">
+                    <div class="card" style="border-top:4px solid var(--accent-purple);">
+                        <span class="card__icon">🎼</span>
+                        <h3 class="card__title" style="color:var(--accent-purple);">Dirigent orchestru = Ty</h3>
+                        <p class="card__text">Nepíšeš každou notu. Máš vizi, znáš strukturu, víš jak má výsledek znít. Říkáš AI <strong>co</strong> a <strong>proč</strong> — ne jak.</p>
+                    </div>
+                    <div class="card" style="border-top:4px solid var(--accent-blue);">
+                        <span class="card__icon">🎻</span>
+                        <h3 class="card__title" style="color:var(--accent-blue);">Hudebníci = AI</h3>
+                        <p class="card__text">Copilot, Cursor, ChatGPT — to jsou tvoji hráči. Umí perfektně hrát, ale potřebují <strong>jasné instrukce</strong> (prompty).</p>
+                    </div>
+                </div>
+                <div class="highlight-box fade-in-delay-3" style="max-width:700px;">
+                    <p><strong style="color:var(--text-primary);">TL;DR:</strong> Vibe coding = nemusíš umět syntaxi, ale musíš umět <em>myslet</em> jako designér a <em>komunikovat</em> s AI. Tvůj kód je konverzace.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide slide--blue">
+            <div class="content-wrapper centered">
+                <span class="tag tag--blue fade-in">Analýza</span>
+                <h2 class="slide-title fade-in-delay-1">📐 Než začneš psát</h2>
+                <p class="slide-subtitle fade-in-delay-1" style="margin-bottom:32px;">I nejlepší AI potřebuje dobrý brief. Nejdřív <strong style="color:var(--accent-blue)">mysli</strong>, pak promptuj.</p>
+                <div class="three-col fade-in-delay-2" style="text-align:left;">
+                    <div class="card">
+                        <span class="card__icon">🎯</span>
+                        <h3 class="card__title">1. Definuj problém</h3>
+                        <p class="card__text">„Pro koho to je? Jaký problém to řeší?"<br><br>Příklad: <em>„Spolužáci chtějí rychle spočítat průměr známek."</em></p>
+                    </div>
+                    <div class="card">
+                        <span class="card__icon">✂️</span>
+                        <h3 class="card__title">2. MVP = minimum</h3>
+                        <p class="card__text"><strong>Minimum Viable Product</strong> — nejmenší verze, která funguje.<br><br>Neřeš login, dark mode, ani animace. Řeš <strong>jádro</strong>.</p>
+                    </div>
+                    <div class="card">
+                        <span class="card__icon">📝</span>
+                        <h3 class="card__title">3. Skica na papír</h3>
+                        <p class="card__text">Nakresli si wireframe. Tužka + papír = nejrychlejší prototypovací tool na světě.<br><br><em>5 minut skicování ušetří 30 minut promptování.</em></p>
+                    </div>
+                </div>
+                <div class="highlight-box fade-in-delay-3" style="max-width:700px;">
+                    <p><strong style="color:var(--text-primary);">🧠 Pro tip:</strong> Než otevřeš VS Code, polož si: <em>„Kdybych měl na appku jen 1 obrazovku a 3 tlačítka — co tam bude?"</em></p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide slide--green">
+            <div class="content-wrapper centered">
+                <span class="tag tag--green fade-in">Design</span>
+                <h2 class="slide-title fade-in">🎨 Informační design</h2>
+                <p class="slide-subtitle fade-in-delay-1" style="margin-bottom:10px;">Obor, který řeší <strong style="color:var(--accent-green)">jak prezentovat data a rozhraní tak, aby jim lidé rozuměli na první pohled</strong>.</p>
+                <p class="slide-subtitle fade-in-delay-1" style="margin-bottom:24px;font-size:0.95rem;">Není to „udělej to hezké" — je to <em>„udělej to pochopitelné"</em>. Navigace v metru, dashboardy v autě, appky v mobilu — všude kolem tebe je informační design. Špatný design = uživatel odejde za 3 sekundy. Dobrý design = uživatel ani neví, že design existuje — prostě to <strong>funguje</strong>.</p>
+                <div class="three-col fade-in-delay-2" style="text-align:left;">
+                    <div class="card" style="border-top:4px solid var(--accent-purple);">
+                        <span class="card__icon">👁️</span>
+                        <h3 class="card__title" style="color:var(--accent-purple);">Hierarchie</h3>
+                        <p class="card__text"><strong>Co vidím první?</strong><br>Nadpis &gt; podnadpis &gt; text. Velikost fontu = důležitost. Uživatel skenuje stránku ve tvaru <strong>F</strong> (levý horní roh → doprava → dolů).</p>
+                    </div>
+                    <div class="card" style="border-top:4px solid var(--accent-cyan);">
+                        <span class="card__icon">🔲</span>
+                        <h3 class="card__title" style="color:var(--accent-cyan);">Kontrast</h3>
+                        <p class="card__text"><strong>Je to čitelné?</strong><br>Důležité prvky musí <strong>vyčnívat</strong> — barvou, velikostí, nebo prostorem kolem sebe (white-space). Malý rozdíl = neviditelný.</p>
+                    </div>
+                    <div class="card" style="border-top:4px solid var(--accent-green);">
+                        <span class="card__icon">👆</span>
+                        <h3 class="card__title" style="color:var(--accent-green);">Zpětná vazba</h3>
+                        <p class="card__text"><strong>Reaguje to na mě?</strong><br>Tlačítko se musí změnit po hoveru. Formulář musí říct „Odesláno!". Uživatel <strong>nikdy</strong> nesmí hádat, co se děje.</p>
+                    </div>
+                </div>
+                <div class="compare-row fade-in-delay-3">
+                    <div class="compare-box bad"><strong>❌ Špatný design</strong>Všechno stejně velké, šedý text na šedém pozadí, tlačítko bez hover efektu, nulový spacing, uživatel neví kam kliknout.</div>
+                    <div class="compare-box good"><strong>✅ Dobrý design</strong>Velký nadpis nahoře, vysoký kontrast textu, tlačítko mění barvu, jasný white-space, akce je zřejmá okamžitě.</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide slide--cyan">
+            <div class="content-wrapper centered">
+                <span class="tag tag--cyan fade-in">Nástroje</span>
+                <h2 class="slide-title fade-in-delay-1">⚡ Tvůj Control Center</h2>
+                <p class="slide-subtitle fade-in-delay-1" style="margin-bottom:32px;">VS Code + GitHub + AI = tvůj superpower stack.</p>
+                <div class="two-col fade-in-delay-2" style="text-align:left;">
+                    <div>
+                        <div class="card mb-16">
+                            <span class="card__icon">🔧</span>
+                            <h3 class="card__title" style="color:var(--accent-cyan);">VS Code = Tvůj editor</h3>
+                            <p class="card__text">Místo, kde píšeš kód (nebo spíš prompty). Rozšiřitelný, zdarma, s integrovaným terminálem. Tvůj digitální workbench.</p>
+                        </div>
+                        <div class="card">
+                            <span class="card__icon">☁️</span>
+                            <h3 class="card__title" style="color:var(--accent-blue);">GitHub = Tvůj cloudový trezor</h3>
+                            <p class="card__text">Ukládáš sem svůj kód. Verzuješ. Sdílíš. A hlavně — můžeš z něj rovnou <strong>deployovat</strong> na web (GitHub Pages).</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="card" style="border:2px solid #c4b5fd;background:#f5f3ff;">
+                            <span class="card__icon">🤖</span>
+                            <h3 class="card__title" style="color:var(--accent-purple);">+ AI asistent = Magie</h3>
+                            <p class="card__text mb-16">Připoj Copilot nebo Cursor a najednou:</p>
+                            <div class="flow" style="justify-content:flex-start;gap:8px;flex-wrap:wrap;">
+                                <div class="flow__step" style="min-width:auto;padding:10px 16px;">
+                                    <span class="flow__step-icon" style="font-size:1.3rem;">💬</span>
+                                    <span class="flow__step-label" style="font-size:0.72rem;">Prompt</span>
+                                </div>
+                                <span class="flow__arrow" style="font-size:1.2rem;">→</span>
+                                <div class="flow__step" style="min-width:auto;padding:10px 16px;">
+                                    <span class="flow__step-icon" style="font-size:1.3rem;">⚙️</span>
+                                    <span class="flow__step-label" style="font-size:0.72rem;">Code</span>
+                                </div>
+                                <span class="flow__arrow" style="font-size:1.2rem;">→</span>
+                                <div class="flow__step" style="min-width:auto;padding:10px 16px;">
+                                    <span class="flow__step-icon" style="font-size:1.3rem;">🌐</span>
+                                    <span class="flow__step-label" style="font-size:0.72rem;">Deploy</span>
+                                </div>
+                            </div>
+                            <p class="card__text mt-12">Řekneš AI co chceš, ono napíše kód, ty to pushneš na GitHub a máš web. <strong>Za minuty, ne dny.</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide slide--orange">
+            <div class="content-wrapper centered">
+                <span class="tag tag--orange fade-in">Inspirace</span>
+                <h2 class="slide-title fade-in-delay-1">🚀 Co všechno se dá „vyvibovat"?</h2>
+                <p class="slide-subtitle fade-in-delay-1" style="margin-bottom:24px;">Tohle všechno zvládne AI vygenerovat za <strong style="color:var(--accent-orange)">5–15 minut</strong>. Stačí dobrý prompt.</p>
+                <div class="mini-grid fade-in-delay-2">
+                    <div class="mini-card"><div class="mini-card__icon">📊</div><div class="mini-card__label">Dashboard s grafy</div></div>
+                    <div class="mini-card"><div class="mini-card__icon">🎮</div><div class="mini-card__label">Mini hra (Snake, Quiz)</div></div>
+                    <div class="mini-card"><div class="mini-card__icon">✅</div><div class="mini-card__label">To-Do appka</div></div>
+                    <div class="mini-card"><div class="mini-card__icon">🌤️</div><div class="mini-card__label">Počasí widget</div></div>
+                    <div class="mini-card"><div class="mini-card__icon">🏠</div><div class="mini-card__label">Hypoteční kalkulačka</div></div>
+                    <div class="mini-card"><div class="mini-card__icon">🎨</div><div class="mini-card__label">Portfolio web</div></div>
+                    <div class="mini-card"><div class="mini-card__icon">📚</div><div class="mini-card__label">Výukový materiál</div></div>
+                    <div class="mini-card"><div class="mini-card__icon">⏱️</div><div class="mini-card__label">Pomodoro timer</div></div>
+                    <div class="mini-card"><div class="mini-card__icon">😂</div><div class="mini-card__label">Generátor memů</div></div>
+                    <div class="mini-card"><div class="mini-card__icon">📇</div><div class="mini-card__label">Flashcard appka</div></div>
+                    <div class="mini-card"><div class="mini-card__icon">🏋️</div><div class="mini-card__label">Habit tracker</div></div>
+                    <div class="mini-card"><div class="mini-card__icon">🎵</div><div class="mini-card__label">Playlist ranker</div></div>
+                    <div class="mini-card"><div class="mini-card__icon">🎲</div><div class="mini-card__label">Generátor týmů</div></div>
+                    <div class="mini-card"><div class="mini-card__icon">📸</div><div class="mini-card__label">Photo galerie</div></div>
+                    <div class="mini-card"><div class="mini-card__icon">💬</div><div class="mini-card__label">AI Chatbot</div></div>
+                    <div class="mini-card"><div class="mini-card__icon">🗳️</div><div class="mini-card__label">Hlasovací appka</div></div>
+                    <div class="mini-card"><div class="mini-card__icon">🍕</div><div class="mini-card__label">Generátor receptů</div></div>
+                    <div class="mini-card"><div class="mini-card__icon">🗓️</div><div class="mini-card__label">Countdown na event</div></div>
+                </div>
+                <div class="highlight-box fade-in-delay-3" style="max-width:700px;">
+                    <p><strong style="color:var(--text-primary);">Klíč:</strong> Čím přesněji popíšeš co chceš (barvy, layout, chování), tím lepší výsledek. Vibe coding je o <strong>kvalitě promptu</strong>, ne o množství kódu.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide slide--green">
+            <div class="content-wrapper" style="max-width:900px;">
+                <div class="centered">
+                    <span class="tag tag--green fade-in">Praktická část</span>
+                    <h2 class="slide-title fade-in-delay-1">🏠 Projekt 1: Hypoteční kalkulačka</h2>
+                    <span class="difficulty difficulty--easy fade-in-delay-1">🟢 Low Effort — Zaměření na funkčnost</span>
+                </div>
+                <div class="left-align mt-32 fade-in-delay-2">
+                    <ul class="bullet-list mb-16">
+                        <li><span class="bullet-icon">🎯</span><span><strong>Cíl:</strong> Vytvořit kalkulačku, která spočítá měsíční splátku hypotéky podle ceny, úroku a doby splácení.</span></li>
+                        <li><span class="bullet-icon">🔑</span><span><strong>Co se naučíš:</strong> Jak AI vygeneruje kompletní logiku + vzorce. Ty jen měníš parametry a vylepšuješ design.</span></li>
+                        <li><span class="bullet-icon">⏱️</span><span><strong>Čas:</strong> ❓❓❓ na fungující verzi, pak vizuální vylepšení.</span></li>
+                    </ul>
+                    <div class="prompt-box green-prompt"><strong>Vytvoř HTML stránku s hypoteční kalkulačkou. Světlý moderní design. Inputy: cena nemovitosti, vlastní prostředky, úroková sazba (%), doba splácení (roky). Výstup: měsíční splátka, celkem zaplaceno, přeplatek. Přidej posuvníky (range slidery) vedle inputů. Výsledek se přepočítá automaticky při změně. Přidej graf rozložení splátek (jistina vs. úroky). Všechno v jednom HTML souboru.</strong></div>
+                    <div class="highlight-box fade-in-delay-3">
+                        <p><strong style="color:var(--text-primary);">🔄 Jak to upravit?</strong> Změň na autoleasingovou kalkulačku, kalkulačku spoření, nebo třeba porovnávač tarifů. Logika výpočtů = jeden prompt.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide slide--orange">
+            <div class="content-wrapper" style="max-width:900px;">
+                <div class="centered">
+                    <span class="tag tag--orange fade-in">Praktická část</span>
+                    <h2 class="slide-title fade-in-delay-1">📚 Projekt 2: Výukový materiál</h2>
+                    <span class="difficulty difficulty--medium fade-in-delay-1">🟠 Medium Effort — Zaměření na UI/UX</span>
+                </div>
+                <div class="left-align mt-32 fade-in-delay-2">
+                    <ul class="bullet-list mb-16">
+                        <li><span class="bullet-icon">🎯</span><span><strong>Cíl:</strong> Interaktivní webová stránka, která vysvětluje libovolné téma — s kvízem, animacemi a přehlednou strukturou.</span></li>
+                        <li><span class="bullet-icon">🔑</span><span><strong>Co se naučíš:</strong> Jak v promptu specifikovat UI pravidla — Tailwind CSS, layout, strukturu obsahu. Design je klíč.</span></li>
+                        <li><span class="bullet-icon">⏱️</span><span><strong>Čas:</strong> ~8 minut. Tady jde o to, aby to <em>vypadalo</em> profesionálně a bylo srozumitelné.</span></li>
+                    </ul>
+                    <div class="prompt-box orange-prompt"><strong>Vytvoř interaktivní výukovou webovou stránku o solární soustavě. Použij Tailwind CSS přes CDN. Světlý design. Struktura: hero sekce s nadpisem, karty pro každou planetu (název, obrázek placeholder, klíčové údaje), na konci interaktivní kvíz s 5 otázkami (multiple choice). Dodržuj pravidla informačního designu — jasná hierarchie, dobrý kontrast, zpětná vazba (správná/špatná odpověď se zvýrazní zeleně/červeně). Všechno v jednom HTML souboru.</strong></div>
+                    <div class="highlight-box fade-in-delay-3">
+                        <p><strong style="color:var(--text-primary);">🎨 Proč Tailwind?</strong> Protože je to „promptovatelný" — místo psaní CSS říkáš AI: <em>„dej tomu rounded-xl, bg-white, text-lg, shadow-md"</em> a ono rozumí. Design through words.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide slide--blue">
+            <div class="content-wrapper" style="max-width:900px;">
+                <div class="centered">
+                    <span class="tag tag--blue fade-in">Praktická část</span>
+                    <h2 class="slide-title fade-in-delay-1">✅ Projekt 3: TO-DO List</h2>
+                    <span class="difficulty difficulty--medium fade-in-delay-1">🟠 Medium Effort — Zaměření na interaktivitu</span>
+                </div>
+                <div class="left-align mt-32 fade-in-delay-2">
+                    <ul class="bullet-list mb-16">
+                        <li><span class="bullet-icon">🎯</span><span><strong>Cíl:</strong> Appka na správu úkolů — přidávání, odškrtávání, mazání, filtrování. Data přežijí reload.</span></li>
+                        <li><span class="bullet-icon">🔑</span><span><strong>Co se naučíš:</strong> CRUD operace (Create, Read, Update, Delete) — základ každé aplikace. Plus localStorage = data zůstanou v prohlížeči.</span></li>
+                        <li><span class="bullet-icon">⏱️</span><span><strong>Čas:</strong> ~8 minut. Výsledek je appka, kterou můžeš fakt denně používat.</span></li>
+                    </ul>
+                    <div class="prompt-box blue-prompt"><strong>Vytvoř moderní TO-DO list aplikaci v jednom HTML souboru. Světlý čistý design, Tailwind CSS přes CDN. Funkce: přidat úkol (Enter nebo tlačítko), označit jako hotový (přeškrtne se), smazat úkol, filtrovat (všechny / aktivní / hotové). Ulož úkoly do localStorage, aby přežily reload. Přidej plynulé animace při přidání a smazání. Prázdný stav ať zobrazí emoji a motivační text.</strong></div>
+                    <div class="highlight-box fade-in-delay-3">
+                        <p><strong style="color:var(--text-primary);">💡 Rozšíření:</strong> Přidej priority (🔴🟡🟢), kategorie, deadline s odpočtem, nebo drag &amp; drop řazení. Každé vylepšení = nový prompt.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide slide--pink">
+            <div class="content-wrapper" style="max-width:900px;">
+                <div class="centered">
+                    <span class="tag tag--pink fade-in">Praktická část</span>
+                    <h2 class="slide-title fade-in-delay-1">🌐 Projekt 4: Landing Page</h2>
+                    <span class="difficulty difficulty--hard fade-in-delay-1">🔴 Vibe Master — Zaměření na deployment</span>
+                </div>
+                <div class="left-align mt-32 fade-in-delay-2">
+                    <ul class="bullet-list mb-16">
+                        <li><span class="bullet-icon">🎯</span><span><strong>Cíl:</strong> Profesionální one-page web s moderním designem — a nasazení na živý URL.</span></li>
+                        <li><span class="bullet-icon">🔑</span><span><strong>Co se naučíš:</strong> Plný workflow — prompt → kód → GitHub → live web. Kompletní pipeline.</span></li>
+                        <li><span class="bullet-icon">⏱️</span><span><strong>Čas:</strong> ~10 minut. Výsledek je skutečný web na internetu.</span></li>
+                    </ul>
+                    <div class="prompt-box pink-prompt"><strong>Vytvoř moderní one-page web pro můj esport tým. Použij glassmorphism design (průhledné prvky s backdrop-blur efektem). Přidej sekce: Hero s názvem týmu a mottem, O nás s kartami členů týmu, Galerie s obrázkovým gridem, a Kontaktní formulář. Použij Tailwind CSS, dark mode, gradient pozadí a smooth scroll navigaci. Všechno v jednom HTML souboru.</strong></div>
+                    <div class="highlight-box fade-in-delay-3">
+                        <p><strong style="color:var(--text-primary);">🚀 Deploy za 2 minuty:</strong> Push na GitHub → Settings → Pages → Deploy. Hotovo. Tvůj web je na <span style="color:var(--accent-pink);font-weight:700;font-family:'JetBrains Mono', monospace;font-size:0.88rem;">username.github.io/repo</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide slide--hero">
+            <div class="floating-shapes">
+                <span style="top:10%;right:10%;width:250px;height:250px;background:rgba(124,58,237,0.07);animation-delay:1s"></span>
+                <span style="bottom:5%;left:5%;width:300px;height:300px;background:rgba(37,99,235,0.06);animation-delay:3s"></span>
+            </div>
+            <div class="content-wrapper centered">
+                <span class="tag tag--purple fade-in">Recap</span>
+                <h2 class="mega-title fade-in-delay-1">Už to není o tom,<br><span class="gradient-text">jestli umíš kódovat.</span></h2>
+                <p class="slide-subtitle fade-in-delay-2" style="margin-bottom:40px;">Je to o tom, jestli umíš <strong style="color:var(--accent-purple)">myslet</strong>, <strong style="color:var(--accent-blue)">designovat</strong> a <strong style="color:var(--accent-cyan)">komunikovat s AI</strong>.<br>Otevřete VS Code a začněte vibovat. 🎵</p>
+                <div class="three-col fade-in-delay-3" style="max-width:800px;">
+                    <div class="card" style="text-align:center;border-top:4px solid var(--accent-purple);">
+                        <span class="card__icon">📐</span>
+                        <h3 class="card__title">1. Mysli</h3>
+                        <p class="card__text">Definuj problém a nakresli skicu</p>
+                    </div>
+                    <div class="card" style="text-align:center;border-top:4px solid var(--accent-blue);">
+                        <span class="card__icon">💬</span>
+                        <h3 class="card__title">2. Promptuj</h3>
+                        <p class="card__text">Řekni AI přesně co chceš</p>
+                    </div>
+                    <div class="card" style="text-align:center;border-top:4px solid var(--accent-cyan);">
+                        <span class="card__icon">🚀</span>
+                        <h3 class="card__title">3. Shipni</h3>
+                        <p class="card__text">Push na GitHub a ukaž to světu</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <nav class="nav">
+        <button id="prevBtn" onclick="changeSlide(-1)" aria-label="Předchozí slide">←</button>
+        <button id="nextBtn" onclick="changeSlide(1)" aria-label="Další slide">→</button>
+    </nav>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        let current = 0;
+        let isAnimating = false;
+
+        function updateUI(index) {
+            const progress = (index / (totalSlides - 1)) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+            const num = String(index + 1).padStart(2, '0');
+            const total = String(totalSlides).padStart(2, '0');
+            document.getElementById('slideCounter').textContent = `${num} / ${total}`;
+        }
+
+        function retriggerChildren(slide) {
+            slide.querySelectorAll('.fade-in, .fade-in-delay-1, .fade-in-delay-2, .fade-in-delay-3').forEach((element) => {
+                element.style.animation = 'none';
+                void element.offsetHeight;
+                element.style.animation = '';
+            });
+        }
+
+        function goToSlide(index) {
+            if (index < 0 || index >= totalSlides || index === current || isAnimating) {
+                return;
+            }
+
+            isAnimating = true;
+            const oldSlide = slides[current];
+            const newSlide = slides[index];
+
+            oldSlide.classList.remove('active');
+            oldSlide.classList.add('animating-out');
+            newSlide.classList.add('animating-in');
+            retriggerChildren(newSlide);
+            updateUI(index);
+
+            setTimeout(() => {
+                oldSlide.classList.remove('animating-out');
+                newSlide.classList.remove('animating-in');
+                newSlide.classList.add('active');
+                current = index;
+                isAnimating = false;
+            }, 460);
+        }
+
+        function changeSlide(direction) {
+            goToSlide(current + direction);
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowRight' || event.key === ' ' || event.key === 'Enter') {
+                event.preventDefault();
+                changeSlide(1);
+            }
+
+            if (event.key === 'ArrowLeft' || event.key === 'Backspace') {
+                event.preventDefault();
+                changeSlide(-1);
+            }
+
+            if (event.key === 'Home') {
+                event.preventDefault();
+                goToSlide(0);
+            }
+
+            if (event.key === 'End') {
+                event.preventDefault();
+                goToSlide(totalSlides - 1);
+            }
+        });
+
+        let touchStartX = 0;
+        document.addEventListener('touchstart', (event) => {
+            touchStartX = event.touches[0].clientX;
+        });
+
+        document.addEventListener('touchend', (event) => {
+            const diff = touchStartX - event.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) {
+                changeSlide(diff > 0 ? 1 : -1);
+            }
+        });
+
+        updateUI(0);
+    </script>
+</body>
+</html>
